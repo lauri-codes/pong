@@ -27,10 +27,11 @@ public:
     BallContactListener mListener;
     void* mPrevContact;
     std::vector<float> requestFrame(const std::vector<float>& input);
+    std::vector<float> requestPosVel(const std::vector<float>& input);
+    GameView mView;
 
 
 private:
-    GameView mView;
     Wall mWallBottom;
     Wall mWallTop;
     QTimer timer;

@@ -99,8 +99,6 @@ std::vector<float> Game::requestFrame(const std::vector<float>& input) {
     // Grab the pixels as output of the game and input for the learning
     QPixmap pixels = mView.grab();
     QImage img = pixels.toImage();
-    qDebug() << img.width();
-    qDebug() << img.height();
 //    img.convertToFormat(QImage::Format_Mono);
     img.setPixelColor(0,0, QColor(255, 0, 0).rgb());
     img.setPixelColor(1,1, QColor(255, 0, 0).rgb());
@@ -129,6 +127,57 @@ std::vector<float> Game::requestFrame(const std::vector<float>& input) {
     int opponentScore = mPlayer2.mScore;
     float fitness = float(playerScore - opponentScore);
     inputs[-1] = fitness;
+
+    return inputs;
+}
+
+std::vector<float> Game::requestPosVel(const std::vector<float>& input) {
+
+    // Set the input
+    float up = input[0];
+    float down = input[1];
+    if (up > 0.5) {
+        this->mPlayer1.mPaddle.upPressed();
+    } else {
+        this->mPlayer1.mPaddle.upReleased();
+    }
+    if (down > 0.5) {
+        this->mPlayer1.mPaddle.downPressed();
+    } else {
+        this->mPlayer1.mPaddle.downReleased();
+    }
+
+    // Advance the game by one frame
+    progress();
+
+    // Return game state
+    b2Vec2 ballPos = mBall.mBody->GetPosition();
+    b2Vec2 ballVel = mBall.mBody->GetLinearVelocity();
+
+    b2Vec2 paddle1Pos = mPlayer1.mPaddle.mBody->GetPosition();
+    b2Vec2 paddle1Vel = mPlayer1.mPaddle.mBody->GetLinearVelocity();
+
+    b2Vec2 paddle2Pos = mPlayer2.mPaddle.mBody->GetPosition();
+    b2Vec2 paddle2Vel = mPlayer2.mPaddle.mBody->GetLinearVelocity();
+
+    int playerScore = mPlayer1.mScore;
+    int opponentScore = mPlayer2.mScore;
+
+    std::vector<float> inputs(6*2+2);
+    inputs[0] = ballPos.x;
+    inputs[1] = ballPos.y;
+    inputs[2] = ballVel.x;
+    inputs[3] = ballVel.y;
+    inputs[4] = paddle1Pos.x;
+    inputs[5] = paddle1Pos.y;
+    inputs[6] = paddle1Vel.x;
+    inputs[7] = paddle1Vel.y;
+    inputs[8] = paddle2Pos.x;
+    inputs[9] = paddle2Pos.y;
+    inputs[10] = paddle2Vel.x;
+    inputs[11] = paddle2Vel.y;
+    inputs[12] = playerScore;
+    inputs[13] = opponentScore;
 
     return inputs;
 }
