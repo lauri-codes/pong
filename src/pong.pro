@@ -33,7 +33,9 @@ SOURCES += main.cpp\
     line.cpp \
     wall.cpp \
     player.cpp \
-    ballcontactlistener.cpp
+    ballcontactlistener.cpp \
+    ga.cpp \
+    simpleNN.cpp
 
 HEADERS  += \
     ball.h \
@@ -46,10 +48,12 @@ HEADERS  += \
     wall.h \
     player.h \
     constants.h \
-    ballcontactlistener.h
+    ballcontactlistener.h \
+    ga.h \
+    simpleNN.h
 
 FORMS    += mainwindow.ui
 
 INCLUDEPATH += ./Box2D/Box2D
 LIBS += -L"./Box2D/Box2D/Build/gmake/bin/Release"
-LIBS += -lBox2D
+LIBS += -lBox2D -larmadillo

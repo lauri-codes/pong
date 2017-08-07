@@ -30,7 +30,7 @@ Game::Game()
     mView.setBackgroundBrush(QBrush(Qt::black, Qt::SolidPattern));
     mView.setCacheMode(QGraphicsView::CacheBackground);
     mView.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    mView.show();
+    mView.show(); //visualization
 
     // Connect key signals from view to the paddle
     QObject::connect(&mView, &GameView::upPressed, &(mPlayer1.mPaddle), &Paddle::upPressed);
@@ -73,7 +73,7 @@ void Game::loop()
 {
 
     // Start the game loop
-    timer.start(16);
+    timer.start(8); // 0 or 16, 0 -> fast
     elapsedTimer.start();
 }
 
@@ -163,21 +163,21 @@ std::vector<float> Game::requestPosVel(const std::vector<float>& input) {
     int playerScore = mPlayer1.mScore;
     int opponentScore = mPlayer2.mScore;
 
-    std::vector<float> inputs(6*2+2);
+    std::vector<float> inputs(4*2+2);
     inputs[0] = ballPos.x;
     inputs[1] = ballPos.y;
     inputs[2] = ballVel.x;
     inputs[3] = ballVel.y;
-    inputs[4] = paddle1Pos.x;
-    inputs[5] = paddle1Pos.y;
-    inputs[6] = paddle1Vel.x;
-    inputs[7] = paddle1Vel.y;
-    inputs[8] = paddle2Pos.x;
-    inputs[9] = paddle2Pos.y;
-    inputs[10] = paddle2Vel.x;
-    inputs[11] = paddle2Vel.y;
-    inputs[12] = playerScore;
-    inputs[13] = opponentScore;
+//    inputs[4] = paddle1Pos.x;
+    inputs[4] = paddle1Pos.y;
+//    inputs[6] = paddle1Vel.x;
+    inputs[5] = paddle1Vel.y;
+//    inputs[8] = paddle2Pos.x;
+    inputs[6] = paddle2Pos.y;
+//    inputs[10] = paddle2Vel.x;
+    inputs[7] = paddle2Vel.y;
+    inputs[8] = playerScore;
+    inputs[9] = opponentScore;
 
     return inputs;
 }
@@ -250,7 +250,7 @@ void Game::progress()
     for (auto iGameObject: gameObjects) {
         iGameObject->move(elapsedTime);
         iGameObject->updateVisuals();
-    }
+   }
 
     // Make the other paddle automatically follow the ball
     b2Vec2 diff = mPlayer2.mPaddle.mBody->GetPosition() - mBall.mBody->GetPosition();
