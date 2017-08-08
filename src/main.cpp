@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     srand (time(NULL));
    int population = 100;
    int generations = 10000;
-   double temperature = 0.1;
+   double temperature = 0.01;
    arma::vec fitness =  arma::zeros<arma::vec>(population);
 
    arma::vec inpNN = arma::ones<arma::vec>(8);
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
    arma::mat DNAS=1 - 2*arma::randu<arma::mat>(fitness.n_elem, inpWeights.n_elem + weights.n_elem + outWeights.n_elem + inpBiases.n_elem + biases.n_elem + outBiases.n_elem);
    DNAS=0.1*DNAS;
-   DNAS.load("DNAS9.save");
+   DNAS.load("DNAS12.save");
    arma::mat outputsNN = arma::zeros<arma::mat>(fitness.n_elem,outBiases.n_elem);
 
     QApplication a(argc, argv);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     for(int gen=0; gen < generations; gen++){
         fitness = 2000*ones<vec>(fitness.n_elem);
       for(int candidate=0; candidate < population; candidate++){
-        for (int step = 0; step < 5000; step++){
+        for (int step = 0; step < 2000; step++){
             for(int j = 0; j < inpNN.n_elem; j++){
                 inpNN(j) = GUIoutput[j];
             }
@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
         }
       }
 //        fitness.t().print("fit");
-      DNAS = ga_eval(DNAS, 0.00001*fitness, 5.0,0.0001000000, temperature);
-      DNAS.save("DNAS10.save",raw_ascii);
+      DNAS = ga_eval(DNAS, 0.00001*fitness, 100.0,0.0001000000, temperature);
+      DNAS.save("DNAS12.save",raw_ascii);
         cout << "MixFitIs: " << max(fitness) << "\n";
         cout << "MinFitIs: " << min(fitness) << "\n";
         temperature -= temperature/(double)generations;
