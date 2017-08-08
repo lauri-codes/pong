@@ -10,11 +10,13 @@ int main(int argc, char *argv[])
 {
     srand (time(NULL));
    int population = 100;
-   int generations = 1000;
-   double temperature = 50;
+   int generations = 10000;
+   double temperature = 0.1;
    arma::vec fitness =  arma::zeros<arma::vec>(population);
 
    arma::vec inpNN = arma::ones<arma::vec>(8);
+   int inputScore =0;
+   int enemyScore =0;
 
    int inpSize = inpNN.n_elem;
    int height = 10;
@@ -30,7 +32,7 @@ int main(int argc, char *argv[])
 
    arma::mat DNAS=1 - 2*arma::randu<arma::mat>(fitness.n_elem, inpWeights.n_elem + weights.n_elem + outWeights.n_elem + inpBiases.n_elem + biases.n_elem + outBiases.n_elem);
    DNAS=0.1*DNAS;
-  DNAS.load("DNAS2.save");
+   DNAS.load("DNAS9.save");
    arma::mat outputsNN = arma::zeros<arma::mat>(fitness.n_elem,outBiases.n_elem);
 
     QApplication a(argc, argv);
@@ -44,9 +46,9 @@ int main(int argc, char *argv[])
     std::vector<float> GUIoutput = game.requestPosVel(GUIinput);
 
     for(int gen=0; gen < generations; gen++){
-        fitness = zeros<vec>(fitness.n_elem);
+        fitness = 2000*ones<vec>(fitness.n_elem);
       for(int candidate=0; candidate < population; candidate++){
-        for (int step = 0; step < 1000; step++){
+        for (int step = 0; step < 5000; step++){
             for(int j = 0; j < inpNN.n_elem; j++){
                 inpNN(j) = GUIoutput[j];
             }
@@ -55,18 +57,20 @@ int main(int argc, char *argv[])
             GUIinput[0] = outputsNN(candidate,0);
             GUIinput[1] = outputsNN(candidate,1);
             GUIoutput = game.requestPosVel(GUIinput);
-//            if(abs(GUIoutput[1]) > 25 ){fitness(candidate) += 1.0;}
-            fitness(candidate) += 0.1*(GUIoutput[4] - GUIoutput[1])*(GUIoutput[4] - GUIoutput[1]);
+            //Fitness Control
+//            fitness(candidate) += 0.05*(GUIoutput[4] - GUIoutput[1])*(GUIoutput[4] - GUIoutput[1]);
+            if(inputScore - GUIoutput[8] !=0 ){inputScore = GUIoutput[8]; fitness(candidate) -= 200;}
+            if(enemyScore - GUIoutput[9] !=0 ){enemyScore = GUIoutput[9]; fitness(candidate) += 200;}
 //            qDebug() << GUIoutput;
 
             QApplication::processEvents(QEventLoop::AllEvents, 1000);
 //        QThread::sleep(0);
         }
       }
-        fitness.t().print("fit");
-      DNAS = ga_eval(DNAS, 0.00001*fitness, 5.0,0.001000000, temperature);
-      DNAS.save("DNAS2.save",raw_ascii);
-        cout << "MaxFitIs: " << max(fitness) << "\n";
+//        fitness.t().print("fit");
+      DNAS = ga_eval(DNAS, 0.00001*fitness, 5.0,0.0001000000, temperature);
+      DNAS.save("DNAS10.save",raw_ascii);
+        cout << "MixFitIs: " << max(fitness) << "\n";
         cout << "MinFitIs: " << min(fitness) << "\n";
         temperature -= temperature/(double)generations;
         cout << "TempIs: " << temperature << endl;
