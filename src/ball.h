@@ -9,7 +9,7 @@ public:
     Ball(b2World& world, QGraphicsScene& scene);
     float mRadius;
     float mInitialSpeed;
-    QGraphicsEllipseItem mItem;
+    QGraphicsRectItem mItem;
 
     void move(float dtime) override;
     void updateVisuals() override;
