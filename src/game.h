@@ -28,6 +28,9 @@ public:
     void* mPrevContact;
     std::vector<float> requestFrame(const std::vector<float>& input);
     std::vector<float> requestPosVel(const std::vector<float>& input);
+    std::vector<float> getInput(const std::vector<float>& controls);
+    float getFitness();
+    float getElapsedTime();
     GameView mView;
 
 
@@ -42,6 +45,8 @@ private:
     int32 mVelocityIterations;
     int32 mPositionIterations;
     QGraphicsLineItem mLine;
+    float mElapsedTime;
+    int mWallTimeStep;
 
 
 public slots:

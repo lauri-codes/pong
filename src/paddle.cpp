@@ -4,16 +4,19 @@
 
 Paddle::Paddle(b2World& world, QGraphicsScene& scene)
     : GameObject(world, scene)
-    , mWidth(2)
-    , mHeight(6)
-    , mSpeed(60)
+    , mWidth(1.5)
+    , mHeight(7)
+    , mSpeed(80)
     , mGoingUp(false)
     , mGoingDown(false)
     , mItem(0, 0, 1.0*mWidth*mPixelsPerMeter, 1.0*mHeight*mPixelsPerMeter)
 {
     // Setup body
     b2BodyDef bodyDef;
-    bodyDef.type = b2_kinematicBody;
+    //bodyDef.type = b2_kinematicBody;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.fixedRotation = true;
+    bodyDef.allowSleep = true;
     bodyDef.position.Set(0.0f, 0.0f);
     b2Body* paddleBody = mWorld.CreateBody(&bodyDef);
 
@@ -25,7 +28,7 @@ Paddle::Paddle(b2World& world, QGraphicsScene& scene)
     b2FixtureDef paddleFixture;
     paddleFixture.shape = &paddleShape;
     paddleFixture.density = 1.0f;
-    paddleFixture.friction = 0.9;
+    paddleFixture.friction = 0.4;
     paddleFixture.restitution = 1.0f;
     paddleFixture.userData = this;
 

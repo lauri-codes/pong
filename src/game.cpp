@@ -1,4 +1,5 @@
 #include "game.h"
+#include <cmath>
 #include <QDebug>
 #include <QOpenGLWidget>
 #include <Box2D/Box2D.h>
@@ -17,19 +18,23 @@ Game::Game()
     , timer()
     , mPlayer1(*this, true)
     , mPlayer2(*this, false)
-    , mTimeStep(1.0f / 600.0f)
+    , mTimeStep(1.0f/60.0f)
     , mVelocityIterations(6)
     , mPositionIterations(2)
     , mLine(0, -pixelsPerMeter*windowHeight, 0, pixelsPerMeter*windowHeight)
+    , mElapsedTime(0.0)
+    , mWallTimeStep(16)
 {
     QOpenGLWidget *glWidget = new QOpenGLWidget();
     mView.setViewport(glWidget);
     mView.update();
     mView.setWindowTitle(QT_TRANSLATE_NOOP(QGraphicsView, "Pong"));
-    mView.setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
+    mView.setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
     mView.setBackgroundBrush(QBrush(Qt::black, Qt::SolidPattern));
     mView.setCacheMode(QGraphicsView::CacheBackground);
-    mView.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    mView.setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing);
+    //mView.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    //mView.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
     mView.show();
 
     // Connect key signals from view to the paddle
@@ -73,7 +78,7 @@ void Game::loop()
 {
 
     // Start the game loop
-    timer.start(16);
+    timer.start(mWallTimeStep);
     elapsedTimer.start();
 }
 
@@ -182,50 +187,83 @@ std::vector<float> Game::requestPosVel(const std::vector<float>& input) {
     return inputs;
 }
 
+std::vector<float> Game::getInput(const std::vector<float>& control) {
+
+    // Set the input
+    float up = control[0];
+    float down = control[1];
+    if (up > 0.5) {
+        this->mPlayer1.mPaddle.upPressed();
+    } else {
+        this->mPlayer1.mPaddle.upReleased();
+    }
+    if (down > 0.5) {
+        this->mPlayer1.mPaddle.downPressed();
+    } else {
+        this->mPlayer1.mPaddle.downReleased();
+    }
+
+    // Advance the game by one frame
+    progress();
+
+    // Return game state
+    b2Vec2 ballPos = mBall.mBody->GetPosition();
+    b2Vec2 ballVel = mBall.mBody->GetLinearVelocity();
+
+    b2Vec2 paddle1Pos = mPlayer1.mPaddle.mBody->GetPosition();
+    b2Vec2 paddle1Vel = mPlayer1.mPaddle.mBody->GetLinearVelocity();
+
+    b2Vec2 paddle2Pos = mPlayer2.mPaddle.mBody->GetPosition();
+    b2Vec2 paddle2Vel = mPlayer2.mPaddle.mBody->GetLinearVelocity();
+
+    std::vector<float> inputs(6*2+2);
+    inputs[0] = ballPos.x;
+    inputs[1] = ballPos.y;
+    inputs[2] = ballVel.x;
+    inputs[3] = ballVel.y;
+    inputs[4] = paddle1Pos.x;
+    inputs[5] = paddle1Pos.y;
+    inputs[6] = paddle1Vel.x;
+    inputs[7] = paddle1Vel.y;
+    inputs[8] = paddle2Pos.x;
+    inputs[9] = paddle2Pos.y;
+    inputs[10] = paddle2Vel.x;
+    inputs[11] = paddle2Vel.y;
+
+    return inputs;
+}
+
+float Game::getFitness() {
+    int playerScore = mPlayer1.mScore;
+    int opponentScore = mPlayer2.mScore;
+    float elapsedTime = getElapsedTime();
+    float fitness = (playerScore-opponentScore)/elapsedTime;
+    return fitness;
+}
+
+float Game::getElapsedTime() {
+    return mElapsedTime;
+}
+
 void Game::progress()
 {
-    float elapsedTime = 16;
+    // Progress elapsed time
+    mElapsedTime += mTimeStep;
     b2Vec2 ballVel1 = mBall.mBody->GetLinearVelocity();
     float ballSpeed1 = ballVel1.Length();
+    float xComp1 = ballVel1.x;
+    float yComp1 = ballVel1.y;
 
     // Run physics
-    mWorld.Step(elapsedTime*mTimeStep, mVelocityIterations, mPositionIterations);
+    mWorld.Step(mTimeStep, mVelocityIterations, mPositionIterations);
 
-    // Ensure that ball is not slowed down, or sped up too much, and that the velocity is
-    // not completely horizontal or vertical
-    b2Vec2 ballVel2 = mBall.mBody->GetLinearVelocity();
-    b2Vec2 newVel = ballVel2;
-    float ballSpeed2 = ballVel2.Length();
-    float maxIncrease = 1.5;
-    if (ballSpeed2 < ballSpeed1) {
-        newVel = ballSpeed1/ballSpeed2*ballVel2;
-    } else if (ballSpeed2 > maxIncrease*ballSpeed1) {
-        newVel = maxIncrease*ballSpeed1/ballSpeed2*ballVel2;
-    }
-    float minComp = 0.5;
-    if (abs(newVel.x) < minComp) {
-        if (newVel.x < 0) {
-            newVel.x = -minComp;
-        } else {
-            newVel.x = minComp;
-        }
-    }
-    if (abs(newVel.y) < minComp) {
-        if (newVel.y < 0) {
-            newVel.y = -minComp;
-        } else {
-            newVel.y = minComp;
-        }
-    }
-    mBall.mBody->SetLinearVelocity(newVel);
-
-    // Remove spin from the ball. We do not want to have the ball spinning, as
-    // the spinning will affect the hits with the paddle.
-    mBall.mBody->SetAngularVelocity(0);
-
-    // Do not allow the paddles to go beyond the screen
+    // Do not allow paddles to move in x-direction
     b2Vec2 paddle1Pos = mPlayer1.mPaddle.mBody->GetPosition();
     b2Vec2 paddle2Pos = mPlayer2.mPaddle.mBody->GetPosition();
+    mPlayer1.mPaddle.mBody->SetTransform(b2Vec2(-40, paddle1Pos.y), 0);
+    mPlayer2.mPaddle.mBody->SetTransform(b2Vec2(40, paddle2Pos.y), 0);
+
+    // Do not allow the paddles to go beyond the screen
     float width = mPlayer1.mPaddle.mWidth;
     float height = mPlayer1.mPaddle.mHeight;
     float maxPos = windowHeight-height/2;
@@ -242,13 +280,54 @@ void Game::progress()
         mPlayer2.mPaddle.mBody->SetTransform(b2Vec2(paddle2Pos.x, -maxPos), 0);
     }
 
+    // Ensure that ball is not slowed down, or sped up too much, and that the velocity is
+    // not completely horizontal or vertical. Also insert fake "push" in the horzontal direction on impact where the paddle vertical speed is high
+    // Do not allow velocity changes that change the y-component too much
+    b2Vec2 ballVel2 = mBall.mBody->GetLinearVelocity();
+    float xComp2 = ballVel2.x;
+    float yComp2 = ballVel2.y;
+    float ballSpeed2 = ballVel2.Length();
+    b2Vec2 newVel = ballVel2;
+
+    // Ensure that the ball does not end up having too little of just one component
+    float minYComp = 10.0;
+    float minXComp = 40.0;
+    if (abs(newVel.x) < minXComp) {
+        if (newVel.x < 0) {
+            newVel.x = -minXComp;
+        } else {
+            newVel.x = minXComp;
+        }
+    }
+    if (abs(newVel.y) < minYComp) {
+        if (newVel.y < 0) {
+            newVel.y = -minYComp;
+        } else {
+            newVel.y = minYComp;
+        }
+    }
+
+    // Ensure that no speed is lost, and that not too much speed is gained
+    float maxIncrease = 1.5;
+    if (ballSpeed2 < ballSpeed1) {
+        newVel = ballSpeed1/ballSpeed2*ballVel2;
+    } else if (ballSpeed2 > maxIncrease*ballSpeed1) {
+        newVel = maxIncrease*ballSpeed1/ballSpeed2*ballVel2;
+    }
+
+    // After each return increase the speed
+    if (std::signbit(xComp2) != std::signbit(xComp1)) {
+        newVel = 1.01f*newVel;
+    }
+    mBall.mBody->SetLinearVelocity(newVel);
+
     // Visualize the final state
     std::vector<GameObject*> gameObjects;
     gameObjects.push_back(&mBall);
     gameObjects.push_back(&(mPlayer1.mPaddle));
     gameObjects.push_back(&(mPlayer2.mPaddle));
     for (auto iGameObject: gameObjects) {
-        iGameObject->move(elapsedTime);
+        iGameObject->move(mTimeStep);
         iGameObject->updateVisuals();
     }
 

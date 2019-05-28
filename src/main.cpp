@@ -20,8 +20,7 @@ int main(int argc, char *argv[])
 //    }
 //    a.exit();
 
-    // Use these lines to manullla play the game
+    // Use these lines to manually play the game
     game.loop();
     a.exec();
-
 }

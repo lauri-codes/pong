@@ -3,8 +3,8 @@
 
 Ball::Ball(b2World& world, QGraphicsScene& scene)
     : GameObject(world, scene)
-    , mRadius(1)
-    , mInitialSpeed(25)
+    , mRadius(0.75)
+    , mInitialSpeed(30)
     , mItem(0, 0, 2*mRadius*mPixelsPerMeter, 2*mRadius*mPixelsPerMeter)
 {
     mItem.setBrush(QBrush(QColor(255, 255, 255)));
@@ -13,6 +13,8 @@ Ball::Ball(b2World& world, QGraphicsScene& scene)
     // Setup body
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
+    bodyDef.fixedRotation = true;
+    bodyDef.bullet = true;
     bodyDef.position.Set(0.0f, 4.0f);
     b2Body* ballBody = mWorld.CreateBody(&bodyDef);
 
@@ -25,7 +27,7 @@ Ball::Ball(b2World& world, QGraphicsScene& scene)
     b2FixtureDef ballFixture;
     ballFixture.shape = &ballShape;
     ballFixture.density = 1.0;
-    ballFixture.friction = 0.9f;
+    ballFixture.friction = 0.4f;
     ballFixture.restitution = 1.0f;
 
     // Add fixtures to body
@@ -37,7 +39,6 @@ Ball::Ball(b2World& world, QGraphicsScene& scene)
 
 void Ball::move(float dtime)
 {
-    mPosition += dtime*mVelocity;
 }
 
 void Ball::updateVisuals()
