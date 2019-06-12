@@ -10,6 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = pong
 TEMPLATE = app
+QMAKE_CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -46,10 +47,22 @@ HEADERS  += \
     wall.h \
     player.h \
     constants.h \
-    ballcontactlistener.h
+    ballcontactlistener.h \
+    nn.h
 
 FORMS    += mainwindow.ui
 
-INCLUDEPATH += ./Box2D/Box2D
-LIBS += -L"./Box2D/Box2D/Build/gmake/bin/Release"
-LIBS += -lBox2D
+# Include LibTorch
+QMAKE_RPATHDIR += $$PWD/../libtorch/lib
+LIBS += -L$$PWD/../libtorch/lib -ltorch -lc10 -lcaffe2 -l:libgomp-8bba0e50.so.1
+#LIBS += -L$$PWD/../libtorch/lib -ltorch -lc10 -lc10d -lnnpack -lcaffe2 -lcaffe2_detectron_ops -lcaffe2_module_test_dynamic -l:libgomp-8bba0e50.so.1
+INCLUDEPATH += $$PWD/../libtorch/include/torch/csrc/api/include
+DEPENDPATH += $$PWD/../libtorch/include/torch/csrc/api/include
+INCLUDEPATH += $$PWD/../libtorch/include
+DEPENDPATH += $$PWD/../libtorch/include
+
+# Include Box2D
+LIBS += -L$$PWD/../Box2D/Box2D/Build/gmake/bin/Release/ -lBox2D
+INCLUDEPATH += $$PWD/../Box2D/Box2D
+DEPENDPATH += $$PWD/../Box2D/Box2D
+PRE_TARGETDEPS += $$PWD/../Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a
