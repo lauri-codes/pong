@@ -26,9 +26,10 @@ public:
     Ball mBall;
     BallContactListener mListener;
     void* mPrevContact;
+    std::vector<float> getState();
     std::vector<float> requestFrame(const std::vector<float>& input);
     std::vector<float> requestPosVel(const std::vector<float>& input);
-    std::vector<float> getInput(const std::vector<float>& controls);
+    std::vector<float> playStep(const std::vector<float>& controls);
     float getFitness();
     float getElapsedTime();
     GameView mView;

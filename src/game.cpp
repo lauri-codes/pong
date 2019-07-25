@@ -187,25 +187,7 @@ std::vector<float> Game::requestPosVel(const std::vector<float>& input) {
     return inputs;
 }
 
-std::vector<float> Game::getInput(const std::vector<float>& control) {
-
-    // Set the input
-    float up = control[0];
-    float down = control[1];
-    if (up > 0.5) {
-        this->mPlayer1.mPaddle.upPressed();
-    } else {
-        this->mPlayer1.mPaddle.upReleased();
-    }
-    if (down > 0.5) {
-        this->mPlayer1.mPaddle.downPressed();
-    } else {
-        this->mPlayer1.mPaddle.downReleased();
-    }
-
-    // Advance the game by one frame
-    progress();
-
+std::vector<float> Game::getState() {
     // Return game state
     b2Vec2 ballPos = mBall.mBody->GetPosition();
     b2Vec2 ballVel = mBall.mBody->GetLinearVelocity();
@@ -231,6 +213,29 @@ std::vector<float> Game::getInput(const std::vector<float>& control) {
     inputs[11] = paddle2Vel.y;
 
     return inputs;
+}
+
+std::vector<float> Game::playStep(const std::vector<float>& control) {
+
+    // Set the input
+    float up = control[0];
+    float down = control[1];
+    if (up > 0.5) {
+        this->mPlayer1.mPaddle.upPressed();
+    } else {
+        this->mPlayer1.mPaddle.upReleased();
+    }
+    if (down > 0.5) {
+        this->mPlayer1.mPaddle.downPressed();
+    } else {
+        this->mPlayer1.mPaddle.downReleased();
+    }
+
+    // Advance the game by one frame
+    progress();
+
+    // Return current state
+    return getState();
 }
 
 float Game::getFitness() {
